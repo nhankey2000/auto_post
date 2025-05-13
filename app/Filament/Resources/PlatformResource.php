@@ -16,8 +16,8 @@ class PlatformResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationGroup = 'Lên Lịch Đăng Bài';
-    protected static ?string $label = 'Nền Tảng';
-    protected static ?string $pluralLabel = 'Nền Tảng';
+    protected static ?string $label = 'Nền Tảng ádasd';
+    protected static ?string $pluralLabel = 'Nền Tảng ád';
 
     /**
      * Define the form schema for creating/editing a Platform.
