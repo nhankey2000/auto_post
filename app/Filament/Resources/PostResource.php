@@ -266,12 +266,6 @@ class PostResource extends Resource
                                         $generated['content'] = strip_tags($generated['content']);
                                         $generated['content'] = self::formatContentForPost($generated['content']);
 
-                                        Log::info('Generated content after formatting', [
-                                            'title' => $generated['title'],
-                                            'content' => $generated['content'],
-                                            'hashtags' => $generated['hashtags'] ?? 'Not set',
-                                        ]);
-
                                         $currentFormData['title'] = $generated['title'];
                                         $currentFormData['content'] = $generated['content'];
                                         $currentFormData['hashtags'] = $generated['hashtags'] ?? [];
@@ -354,12 +348,6 @@ class PostResource extends Resource
                                         $generated['content'] = strip_tags($generated['content']);
                                         $generated['content'] = self::formatContentForPost($generated['content']);
 
-                                        Log::info('Regenerated content after formatting', [
-                                            'title' => $generated['title'],
-                                            'content' => $generated['content'],
-                                            'hashtags' => $generated['hashtags'] ?? 'Not set',
-                                        ]);
-
                                         $currentFormData['title'] = $generated['title'];
                                         $currentFormData['content'] = $generated['content'];
                                         $currentFormData['hashtags'] = $generated['hashtags'] ?? [];
@@ -408,13 +396,13 @@ class PostResource extends Resource
                                 ->action(function (Get $get, Set $set) {
                                     $currentContent = $get('content') ?? '';
                                     $contactInfo = "🌿MỌI THÔNG TIN CHI TIẾT LIÊN HỆ 🌿\n" .
-                                                   "🎯Địa chỉ: Tổ 26, ấp Mỹ Ái, xã Mỹ Khánh, huyện Phong Điền, TP Cần Thơ.\n" .
-                                                   "🎯Địa chỉ google map: https://goo.gl/maps/padvdnsZeBHM6UC97\n" .
-                                                   "☎️Hotline: 0901 095 709 |  0931 852 113\n" .
-                                                   "🔰Zalo hỗ trợ: 078 2 918 222\n" .
-                                                   "📧Mail: dulichongde@gmail.com\n" .
-                                                   "🌐Website: www.ongde.vn\n" .
-                                                   "#ongde #dulichongde #khudulichongde #langdulichsinhthaiongde #homestay #phimtruong #mientay #VietNam #Thailand #Asian #thienvientruclam #chonoicairang #khachsancantho #dulichcantho #langdulichongde";
+                                        "🎯Địa chỉ: Tổ 26, ấp Mỹ Ái, xã Mỹ Khánh, huyện Phong Điền, TP Cần Thơ.\n" .
+                                        "🎯Địa chỉ google map: https://goo.gl/maps/padvdnsZeBHM6UC97\n" .
+                                        "☎️Hotline: 0901 095 709 |  0931 852 113\n" .
+                                        "🔰Zalo hỗ trợ: 078 2 918 222\n" .
+                                        "📧Mail: dulichongde@gmail.com\n" .
+                                        "🌐Website: www.ongde.vn\n" .
+                                        "#ongde #dulichongde #khudulichongde #langdulichsinhthaiongde #homestay #phimtruong #mientay #VietNam #Thailand #Asian #thienvientruclam #chonoicairang #khachsancantho #dulichcantho #langdulichongde";
 
                                     $newContent = $currentContent ? $currentContent . "\n\n" . $contactInfo : $contactInfo;
                                     $set('content', $newContent);
@@ -495,7 +483,6 @@ class PostResource extends Resource
                                     ->label('Chọn Trang')
                                     ->options(function (Get $get) {
                                         $platformAccountIds = $get('../../platform_account_ids') ?? [];
-                                        Log::info('Platform Account IDs in Repeater:', $platformAccountIds);
                                         return empty($platformAccountIds)
                                             ? []
                                             : PlatformAccount::whereIn('id', $platformAccountIds)
@@ -606,6 +593,7 @@ class PostResource extends Resource
                     })
                     ->default('Không Có Lịch Đăng Lại')
                     ->extraAttributes(['class' => 'text-gray-400']),
+
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -634,7 +622,6 @@ class PostResource extends Resource
                             if ($platformAccount && $platformAccount->platform->name === 'Facebook' && $platformAccount->access_token) {
                                 try {
                                     $facebookService->deletePost($record->facebook_post_id, $platformAccount->access_token);
-                                    Log::info("Đã xóa bài viết trên Facebook: Post ID {$record->facebook_post_id}");
                                 } catch (\Exception $e) {
                                     Log::error('Failed to delete post from Facebook for platform account ' . $platformAccount->name . ': ' . $e->getMessage());
                                 }
@@ -647,7 +634,6 @@ class PostResource extends Resource
                                     try {
                                         $facebookService->deletePost($repost->facebook_post_id, $platformAccount->access_token);
                                         $repost->update(['facebook_post_id' => null]);
-                                        Log::info("Đã xóa bài viết trên Facebook: Post ID {$repost->facebook_post_id}");
                                     } catch (\Exception $e) {
                                         Log::error('Failed to delete post from Facebook for platform account ' . $platformAccount->name . ': ' . $e->getMessage());
                                     }
@@ -679,21 +665,7 @@ class PostResource extends Resource
                             $message .= "\n" . implode(' ', $record->hashtags);
                         }
 
-                        Log::info('Post content before sending to Facebook', [
-                            'post_id' => $record->id,
-                            'message' => $message,
-                            'newlines' => substr_count($message, "\n"),
-                        ]);
-
                         $mediaData = self::prepareMediaPaths($record->media ?? [], $record->id);
-
-                        // Log dữ liệu media trước khi xử lý
-                        Log::info('Media data before processing in post_now', [
-                            'post_id' => $record->id,
-                            'media_paths' => $mediaData['paths'],
-                            'media_type' => $mediaData['type'],
-                            'media_count' => count($mediaData['paths']),
-                        ]);
 
                         $platformAccount = $record->platformAccount;
                         if ($platformAccount && $platformAccount->platform->name === 'Facebook' && $platformAccount->access_token) {
@@ -747,13 +719,6 @@ class PostResource extends Resource
                                     $videoPaths = $flattenArray($videoPaths);
                                     $videoPaths = array_filter($videoPaths);
 
-                                    Log::info('Video paths after normalization in post_now', [
-                                        'post_id' => $record->id,
-                                        'video_paths' => $videoPaths,
-                                        'type' => gettype($videoPaths),
-                                        'content' => json_encode($videoPaths),
-                                    ]);
-
                                     // Sử dụng postVideo thay vì postVideoToPage
                                     $facebookPostIds = $facebookService->postVideo($pageId, $platformAccount->access_token, $message, $videoPaths);
                                     $facebookPostId = $facebookPostIds[0] ?? null; // Lấy post ID đầu tiên
@@ -772,8 +737,6 @@ class PostResource extends Resource
                                     ->title('Đăng Bài Thành Công')
                                     ->body("Bài viết đã được đăng lên trang {$platformAccount->name}.")
                                     ->send();
-
-                                Log::info("Đã đăng bài viết lên trang {$platformAccount->name}: Post ID {$facebookPostId}");
                             } catch (\Exception $e) {
                                 Log::error("Error posting to page {$platformAccount->name} for Post ID {$record->id}: " . $e->getMessage());
                                 Notification::make()
@@ -840,20 +803,7 @@ class PostResource extends Resource
                             $message .= "\n" . implode(' ', $data['hashtags']);
                         }
 
-                        Log::info('Post content before sending to Facebook (update)', [
-                            'post_id' => $record->id,
-                            'message' => $message,
-                            'newlines' => substr_count($message, "\n"),
-                        ]);
-
                         $mediaData = self::prepareMediaPaths($data['media'] ?? [], $record->id);
-
-                        Log::info('Media data for update', [
-                            'post_id' => $record->id,
-                            'media_paths' => $mediaData['paths'],
-                            'media_type' => $mediaData['type'],
-                            'media_count' => count($mediaData['paths']),
-                        ]);
 
                         $platformAccount = $record->platformAccount;
                         if ($platformAccount && $platformAccount->platform->name === 'Facebook' && $platformAccount->access_token) {
@@ -893,8 +843,6 @@ class PostResource extends Resource
                                         'hashtags' => $data['hashtags'],
                                     ]);
                                 }
-
-                                Log::info("Đã cập nhật bài viết trên trang {$platformAccount->name}: Post ID {$record->facebook_post_id}");
 
                                 Notification::make()
                                     ->success()
@@ -946,12 +894,6 @@ class PostResource extends Resource
                                         $message .= "\n" . implode(' ', $record->hashtags);
                                     }
 
-                                    Log::info('Post content before sending to Facebook (bulk)', [
-                                        'post_id' => $record->id,
-                                        'message' => $message,
-                                        'newlines' => substr_count($message, "\n"),
-                                    ]);
-
                                     $mediaData = self::prepareMediaPaths($record->media ?? [], $record->id);
 
                                     $platformAccount = $record->platformAccount;
@@ -994,13 +936,6 @@ class PostResource extends Resource
                                                 $videoPaths = $flattenArray($videoPaths);
                                                 $videoPaths = array_filter($videoPaths);
 
-                                                Log::info('Video paths after normalization in post_all_now', [
-                                                    'post_id' => $record->id,
-                                                    'video_paths' => $videoPaths,
-                                                    'type' => gettype($videoPaths),
-                                                    'content' => json_encode($videoPaths),
-                                                ]);
-
                                                 // Sử dụng postVideo thay vì postVideoToPage
                                                 $facebookPostIds = $facebookService->postVideo($pageId, $platformAccount->access_token, $message, $videoPaths);
                                                 $facebookPostId = $facebookPostIds[0] ?? null; // Lấy post ID đầu tiên
@@ -1014,7 +949,6 @@ class PostResource extends Resource
                                                 'scheduled_at' => null,
                                             ]);
                                             $successCount++;
-                                            Log::info("Đã đăng bài viết lên trang {$platformAccount->name}: Post ID {$facebookPostId}");
                                         } catch (\Exception $e) {
                                             $errorMessages[] = "Bài viết ID {$record->id}: Không thể đăng bài lên trang {$platformAccount->name}: {$e->getMessage()}";
                                             Log::error("Error posting to page {$platformAccount->name} for Post ID {$record->id}: " . $e->getMessage());
@@ -1069,7 +1003,6 @@ class PostResource extends Resource
                                     if ($platformAccount && $platformAccount->platform->name === 'Facebook' && $platformAccount->access_token) {
                                         try {
                                             $facebookService->deletePost($record->facebook_post_id, $platformAccount->access_token);
-                                            Log::info("✅ Đã xoá bài viết chính Facebook: {$record->facebook_post_id}");
                                         } catch (\Exception $e) {
                                             Log::error("❌ Xoá post Facebook lỗi: " . $e->getMessage());
                                         }
@@ -1083,7 +1016,6 @@ class PostResource extends Resource
                                             try {
                                                 $facebookService->deletePost($repost->facebook_post_id, $platformAccount->access_token);
                                                 $repost->update(['facebook_post_id' => null]);
-                                                Log::info("✅ Đã xoá repost Facebook: {$repost->facebook_post_id}");
                                             } catch (\Exception $e) {
                                                 Log::error("❌ Xoá repost lỗi: " . $e->getMessage());
                                             }

@@ -49,35 +49,35 @@ class AiPostPromptResource extends Resource
 
                     // Image upload section
                     Forms\Components\FileUpload::make('image')
-                    ->label('Hình Ảnh')
-                    ->image()
-                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
-                    ->maxFiles(1)
-                    ->directory('ai-post-images')
-                    ->disk('public')
-                    ->preserveFilenames()
-                    ->dehydrated(true)
-                    ->required(fn (callable $get) => $get('show_image_upload'))
-                    ->helperText('Tải lên một hình ảnh duy nhất (JPG, PNG, GIF, WebP) để sử dụng cho bài đăng.')
-                    ->visible(fn (callable $get) => $get('show_image_upload'))
-                    ->afterStateUpdated(function ($state) {
-                        Log::info('Trạng thái FileUpload image', [
-                            'state' => $state,
-                        ]);
-                    })
-                    ->getUploadedFileNameForStorageUsing(function ($file) {
-                        $filename = $file->getClientOriginalName();
-                        $path = 'ai-post-images/' . $filename;
-                        Log::info('Tên file từ FileUpload', [
-                            'filename' => $filename,
-                            'path' => $path,
-                        ]);
-                        return $path;
-                    })
-                    ->validationMessages([
-                        'required' => 'Vui lòng tải lên một hình ảnh.',
-                        'image' => 'File tải lên phải là hình ảnh (JPG, PNG, GIF, WebP).',
-                    ]),
+                        ->label('Hình Ảnh')
+                        ->image()
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                        ->maxFiles(1)
+                        ->directory('ai-post-images')
+                        ->disk('public')
+                        ->preserveFilenames()
+                        ->dehydrated(true)
+                        ->required(fn (callable $get) => $get('show_image_upload'))
+                        ->helperText('Tải lên một hình ảnh duy nhất (JPG, PNG, GIF, WebP) để sử dụng cho bài đăng.')
+                        ->visible(fn (callable $get) => $get('show_image_upload'))
+                        ->afterStateUpdated(function ($state) {
+                            Log::info('Trạng thái FileUpload image', [
+                                'state' => $state,
+                            ]);
+                        })
+                        ->getUploadedFileNameForStorageUsing(function ($file) {
+                            $filename = $file->getClientOriginalName();
+                            $path = 'ai-post-images/' . $filename;
+                            Log::info('Tên file từ FileUpload', [
+                                'filename' => $filename,
+                                'path' => $path,
+                            ]);
+                            return $path;
+                        })
+                        ->validationMessages([
+                            'required' => 'Vui lòng tải lên một hình ảnh.',
+                            'image' => 'File tải lên phải là hình ảnh (JPG, PNG, GIF, WebP).',
+                        ]),
 
                     // Prompt textarea
                     ...self::getPromptField(),
@@ -341,19 +341,7 @@ class AiPostPromptResource extends Resource
                 Tables\Columns\TextColumn::make('image_count')
                     ->label('Số ảnh random')
                     ->formatStateUsing(fn ($state) => $state ? "$state ảnh" : 'Chưa chọn'),
-                Tables\Columns\TextColumn::make('scheduled_at')
-                    ->label('Thời điểm lên lịch')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('repeatSchedules.schedule')
-                    ->label('Lịch chạy lại')
-                    ->limit(10)
-                    ->formatStateUsing(function ($record) {
-                        $schedules = $record->repeatSchedules->pluck('schedule')->filter();
-                        return $schedules->isEmpty()
-                            ? 'Không có'
-                            : $schedules->map(fn ($schedule) => $schedule->format('d/m/Y H:i'))->join(', ');
-                    }),
+
                 Tables\Columns\SelectColumn::make('status')
                     ->label('Trạng thái')
                     ->options([
@@ -364,28 +352,14 @@ class AiPostPromptResource extends Resource
                     ])
                     ->sortable()
                     ->disabled(),
-                Tables\Columns\TextColumn::make('generated_content')
-                    ->label('Nội dung sinh ra')
-                    ->limit(10)
-                    ->tooltip(fn ($record) => $record->generated_content),
-                Tables\Columns\TextColumn::make('platform.name')
-                    ->label('Nền tảng')
-                    ->formatStateUsing(fn ($record) => $record->platform ? $record->platform->name : 'Không có'),
-                Tables\Columns\TextColumn::make('post_option')
-                    ->label('Tùy chọn đăng bài')
-                    ->formatStateUsing(fn ($state) => match ($state) {
-                        'all' => 'Đăng tất cả trang',
-                        'selected' => 'Chọn trang',
-                        default => 'Không có',
-                    }),
-                Tables\Columns\TextColumn::make('posted_at')
-                    ->label('Thời điểm đăng')
-                    ->dateTime('d/m/Y H:i')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Tạo lúc')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('Người Lên Lịch')
+                    ->sortable()
+                    ->searchable()
+                    ->default('Không xác định')
+                    ->formatStateUsing(fn ($record) => $record->user ? $record->user->name : 'Không xác định'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -426,7 +400,7 @@ class AiPostPromptResource extends Resource
     public static function getPages(): array
     {
         return [
-            
+
             'index' => Pages\ListAiPostPrompts::route('/'),
             'create' => Pages\CreateAiPostPrompt::route('/create'),
             'edit' => Pages\EditAiPostPrompt::route('/{record}/edit'),

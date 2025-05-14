@@ -41,7 +41,7 @@ class RepeatScheduledResource extends Resource
                     ->required(),
                 TextInput::make('title')
                     ->label('Tiêu đề')
-                    ->required() 
+                    ->required()
                     ->maxLength(255),
                 Textarea::make('content')
                     ->label('Nội dung')
@@ -118,6 +118,16 @@ class RepeatScheduledResource extends Resource
                             return $images;
                         }
                         return [];
+                    }),
+                TextColumn::make('aiPostPrompt.user.name')
+                    ->label('Tác giả')
+                    ->sortable()
+                    ->searchable()
+                    ->default('Không xác định')
+                    ->formatStateUsing(function ($record) {
+                        return $record->aiPostPrompt && $record->aiPostPrompt->user
+                            ? $record->aiPostPrompt->user->name
+                            : 'Không xác định';
                     }),
             ])
             ->filters([

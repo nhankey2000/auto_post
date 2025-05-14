@@ -33,21 +33,21 @@ class ChatGptContentService
                 : "Tự động tạo ít nhất 2 hashtag và tối đa $maxHashtags hashtag phù hợp với nội dung bài viết. Đảm bảo mỗi hashtag bắt đầu bằng ký tự #.";
 
             $prompt = "Bạn là một chuyên gia viết bài quảng cáo trên mạng xã hội. Hãy tạo một bài viết cho nền tảng $platform với các yêu cầu sau:\n" .
-                      "- Chủ đề: $topic\n" .
-                      "- Phong cách: $tone\n" .
-                      "- Ngôn ngữ: $language\n" .
-                      "- Độ dài tối đa: $maxLength ký tự\n" .
-                      "- Hashtags: $hashtagsInstruction\n" .
-                      "Trả về bài viết dưới dạng JSON với các trường: `title` (tiêu đề), `content` (nội dung bài viết), và `hashtags` (danh sách hashtag dưới dạng mảng). Đảm bảo:\n" .
-                      "- Nội dung bài viết (`content`) không được chứa bất kỳ thẻ HTML nào (như <p>, <br>, v.v.), chỉ sử dụng văn bản thuần túy.\n" .
-                      "- Nội dung bài viết (`content`) **phải** được ngắt dòng sau mỗi câu hoàn chỉnh (kết thúc bằng dấu chấm '.', dấu chấm than '!', dấu hỏi '?', hoặc dấu ba chấm '...'). Sử dụng ký tự \\n để ngắt dòng. Không để nội dung dính liền trên một dòng.\n" .
-                      "- Trường `hashtags` phải là một mảng các chuỗi, mỗi chuỗi bắt đầu bằng ký tự #. Nếu không có hashtag, trả về mảng rỗng [].\n" .
-                      "- Chỉ trả về JSON hợp lệ, không thêm bất kỳ nội dung nào khác ngoài JSON. Ví dụ:\n" .
-                      "{\n" .
-                      "  \"title\": \"Tiêu đề bài viết\",\n" .
-                      "  \"content\": \"Câu 1: Nội dung chính của bài viết. \\nCâu 2: Chi tiết thú vị khác! \\nCâu 3: Kêu gọi hành động. 😍\",\n" .
-                      "  \"hashtags\": [\"#hashtag1\", \"#hashtag2\"]\n" .
-                      "}";
+                "- Chủ đề: $topic\n" .
+                "- Phong cách: $tone\n" .
+                "- Ngôn ngữ: $language\n" .
+                "- Độ dài tối đa: $maxLength ký tự\n" .
+                "- Hashtags: $hashtagsInstruction\n" .
+                "Trả về bài viết dưới dạng JSON với các trường: `title` (tiêu đề), `content` (nội dung bài viết), và `hashtags` (danh sách hashtag dưới dạng mảng). Đảm bảo:\n" .
+                "- Nội dung bài viết (`content`) không được chứa bất kỳ thẻ HTML nào (như <p>, <br>, v.v.), chỉ sử dụng văn bản thuần túy.\n" .
+                "- Nội dung bài viết (`content`) **phải** được ngắt dòng sau mỗi câu hoàn chỉnh (kết thúc bằng dấu chấm '.', dấu chấm than '!', dấu hỏi '?', hoặc dấu ba chấm '...'). Sử dụng ký tự \\n để ngắt dòng. Không để nội dung dính liền trên một dòng.\n" .
+                "- Trường `hashtags` phải là một mảng các chuỗi, mỗi chuỗi bắt đầu bằng ký tự #. Nếu không có hashtag, trả về mảng rỗng [].\n" .
+                "- Chỉ trả về JSON hợp lệ, không thêm bất kỳ nội dung nào khác ngoài JSON. Ví dụ:\n" .
+                "{\n" .
+                "  \"title\": \"Tiêu đề bài viết\",\n" .
+                "  \"content\": \"Câu 1: Nội dung chính của bài viết. \\nCâu 2: Chi tiết thú vị khác! \\nCâu 3: Kêu gọi hành động. 😍\",\n" .
+                "  \"hashtags\": [\"#hashtag1\", \"#hashtag2\"]\n" .
+                "}";
 
             // 3️⃣ Gọi API OpenAI để sinh nội dung
             $response = OpenAI::chat()->create([
@@ -60,16 +60,6 @@ class ChatGptContentService
             ]);
 
             $result = $response->choices[0]->message->content;
-
-            // Ghi log nội dung thô trả về từ GPT để debug
-            Log::info('Nội dung thô trả về từ GPT', [
-                'post_id' => $post ? ($post->id ?? 'new_instance') : 'new_instance',
-                'topic' => $topic,
-                'tone' => $tone,
-                'language' => $language,
-                'platform' => $platform,
-                'result' => $result,
-            ]);
 
             // 4️⃣ Parse kết quả JSON từ GPT
             $generated = json_decode($result, true);
@@ -97,14 +87,6 @@ class ChatGptContentService
             $title = strip_tags($generated['title']); // Loại bỏ thẻ HTML từ tiêu đề
             $content = strip_tags($generated['content']); // Loại bỏ thẻ HTML từ nội dung
 
-            // Ghi log để kiểm tra nội dung sau khi loại bỏ thẻ HTML
-            Log::info('Nội dung sau khi loại bỏ thẻ HTML', [
-                'post_id' => $post ? ($post->id ?? 'new_instance') : 'new_instance',
-                'title' => $title,
-                'content' => $content,
-                'newlines' => substr_count($content, "\n"),
-            ]);
-
             // 6️⃣ Chuẩn hóa nội dung: đảm bảo \n sau mỗi câu
             // Thay thế các ký tự xuống dòng không mong muốn
             $content = str_replace(["\r\n", "\r"], "\n", $content);
@@ -119,14 +101,6 @@ class ChatGptContentService
             $lines = array_map('trim', $lines); // Loại bỏ khoảng trắng thừa ở đầu và cuối mỗi dòng
             $lines = array_filter($lines, fn($line) => $line !== ''); // Loại bỏ các dòng trống
             $content = implode("\n", $lines); // Ghép lại với 1 \n giữa các dòng
-
-            // Ghi log để kiểm tra nội dung sau khi thêm ngắt dòng
-            Log::info('Nội dung sau khi tự động thêm ngắt dòng', [
-                'post_id' => $post ? ($post->id ?? 'new_instance') : 'new_instance',
-                'original_content' => $generated['content'],
-                'new_content' => $content,
-                'newlines' => substr_count($content, "\n"),
-            ]);
 
             // 7️⃣ Đảm bảo hashtags là một mảng và bắt đầu bằng #
             $hashtags = $generated['hashtags'];
@@ -160,10 +134,6 @@ class ChatGptContentService
                 }
                 $defaultHashtags[] = "#{$platform}";
                 $hashtags = array_slice($defaultHashtags, 0, $maxHashtags);
-                Log::info('Thêm hashtag mặc định vì GPT không trả về hashtag', [
-                    'post_id' => $post ? ($post->id ?? 'new_instance') : 'new_instance',
-                    'default_hashtags' => $hashtags,
-                ]);
             }
 
             return [

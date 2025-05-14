@@ -14,7 +14,7 @@ class AiPostPrompt extends Model
         'image',
         'image_count',
         'scheduled_at',
-       
+        'user_id',
         'status',
         'generated_content',
         'post_option', // Thêm cột mới
@@ -44,5 +44,9 @@ class AiPostPrompt extends Model
     public function repeatSchedules()
     {
         return $this->hasMany(RepeatScheduled::class, 'ai_post_prompts_id');
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }
