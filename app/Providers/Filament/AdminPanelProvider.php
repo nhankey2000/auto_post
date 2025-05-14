@@ -38,10 +38,7 @@ class AdminPanelProvider extends PanelProvider
                 MessageResource::class, // Đăng ký thủ công MessageResource
             ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            ->pages([
-                Pages\Dashboard::class,
-                \App\Filament\Pages\GrowthChart::class, // Trang GrowthChart đã có
-            ])
+
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
